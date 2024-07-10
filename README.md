@@ -354,3 +354,215 @@ function Cartinfo() {
 export default Cartinfo;
 
 
+
+import React from 'react';
+import Navbar from '../../component/Navbar';
+import { useLocation } from 'react-router-dom';
+import "./Paymentpage.css";
+
+function Paymentpage() {
+    const location = useLocation();
+    const { selectedTotal } = location.state;
+
+    return (
+        <>
+            <Navbar />
+            <div className='p-4'>
+                <div className="container shadow ">
+                    <div className='cart'>
+                        <div className="title">
+                            <h2 className='text-black'>Payment method</h2>
+                        </div>
+                        <div className="form-row">
+                            <div className="form-group col-md-6">
+                                <label htmlFor="inputFirstName">First Name</label>
+                                <input type="text" className="form-control" id="inputFirstName" placeholder="First Name" />
+                            </div>
+                            <div className="form-group col-md-6">
+                                <label htmlFor="inputLastName">Last Name</label>
+                                <input type="text" className="form-control" id="inputLastName" placeholder="Last Name" />
+                            </div>
+                        </div>
+                        <div className="form-group">
+                            <label htmlFor="inputAddress">Street Address</label>
+                            <input type="text" className="form-control" id="inputAddress" placeholder="House number and street name" />
+                        </div>
+                        <div className="form-group">
+                            <label htmlFor="inputCity">Town / City</label>
+                            <input type="text" className="form-control" id="inputCity" placeholder="Town / City" />
+                        </div>
+                        <div className="form-group">
+                            <label htmlFor="inputState">State / County</label>
+                            <input type="text" className="form-control" id="inputState" placeholder="State / County" />
+                        </div>
+                        <div className="form-group">
+                            <label htmlFor="inputZip">Postcode / ZIP</label>
+                            <input type="text" className="form-control" id="inputZip" placeholder="Postcode / ZIP" />
+                        </div>
+                        <div className="form-group">
+                            <label htmlFor="inputPhone">Phone</label>
+                            <input type="tel" className="form-control" id="inputPhone" placeholder="Phone" />
+                        </div>
+                        <div className="form-group">
+                            <label htmlFor="inputEmail">Email Address</label>
+                            <input type="email" className="form-control" id="inputEmail" placeholder="Email Address" />
+                        </div>
+
+                        <button type="submit" className="btn btn-secondary text-bg-dark">Cash on Delivery</button>
+                        <button type="submit" className="btn btn-secondary text-bg-info p-2 m-3">Pay online</button>
+                    </div>
+                    <h1 className='text-black'>
+                        Total Amount: ${selectedTotal.toFixed(2)}
+                    </h1>
+                </div>
+            </div>
+        </>
+    );
+}
+
+export default Paymentpage;
+
+
+// models/Order.js
+import mongoose from 'mongoose';
+
+const orderSchema = new mongoose.Schema({
+    firstName: { type: String, required: true },
+    lastName: { type: String, required: true },
+    address: { type: String, required: true },
+    city: { type: String, required: true },
+    state: { type: String, required: true },
+    zip: { type: String, required: true },
+    phone: { type: String, required: true },
+    email: { type: String, required: true },
+    totalAmount: { type: Number, required: true },
+    paymentStatus: { type: String, enum: ['Pending', 'Completed'], default: 'Pending' },
+    createdAt: { type: Date, default: Date.now }
+});
+
+const Order = mongoose.model('Order', orderSchema);
+
+export default Order;
+
+
+// controllers/orderController.js
+import Order from '../models/Order.js';
+
+export const createOrder = async (req, res) => {
+    try {
+        const newOrder = new Order(req.body);
+        await newOrder.save();
+        res.status(201).send({ message: "Order placed successfully", order: newOrder });
+    } catch (error) {
+        console.error("Error creating order:", error);
+        res.status(500).send({ error: error.message });
+    }
+};
+
+
+import React, { useState } from 'react';
+import Navbar from '../../component/Navbar';
+import { useLocation, useNavigate } from 'react-router-dom';
+import axios from 'axios';
+import "./Paymentpage.css";
+
+function Paymentpage() {
+    const location = useLocation();
+    const { selectedTotal } = location.state;
+    const [formData, setFormData] = useState({
+        firstName: '',
+        lastName: '',
+        address: '',
+        city: '',
+        state: '',
+        zip: '',
+        phone: '',
+        email: ''
+    });
+
+    const navigate = useNavigate();
+
+    const handleChange = (e) => {
+        setFormData({
+            ...formData,
+            [e.target.name]: e.target.value
+        });
+    };
+
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        const orderData = {
+            ...formData,
+            totalAmount: selectedTotal,
+            paymentStatus: 'Pending'
+        };
+
+        try {
+            await axios.post('/api/orders', orderData);
+            navigate('/order-success');
+        } catch (error) {
+            console.error('Error saving order:', error);
+        }
+    };
+
+    return (
+        <>
+            <Navbar />
+            <div className='p-4'>
+                <div className="container shadow ">
+                    <div className='cart'>
+                        <div className="title">
+                            <h2 className='text-black'>Payment method</h2>
+                        </div>
+                        <form onSubmit={handleSubmit}>
+                            <div className="form-row">
+                                <div className="form-group col-md-6">
+                                    <label htmlFor="inputFirstName">First Name</label>
+                                    <input type="text" className="form-control" id="inputFirstName" name="firstName" placeholder="First Name" value={formData.firstName} onChange={handleChange} required />
+                                </div>
+                                <div className="form-group col-md-6">
+                                    <label htmlFor="inputLastName">Last Name</label>
+                                    <input type="text" className="form-control" id="inputLastName" name="lastName" placeholder="Last Name" value={formData.lastName} onChange={handleChange} required />
+                                </div>
+                            </div>
+                            <div className="form-group">
+                                <label htmlFor="inputAddress">Street Address</label>
+                                <input type="text" className="form-control" id="inputAddress" name="address" placeholder="House number and street name" value={formData.address} onChange={handleChange} required />
+                            </div>
+                            <div className="form-group">
+                                <label htmlFor="inputCity">Town / City</label>
+                                <input type="text" className="form-control" id="inputCity" name="city" placeholder="Town / City" value={formData.city} onChange={handleChange} required />
+                            </div>
+                            <div className="form-group">
+                                <label htmlFor="inputState">State / County</label>
+                                <input type="text" className="form-control" id="inputState" name="state" placeholder="State / County" value={formData.state} onChange={handleChange} required />
+                            </div>
+                            <div className="form-group">
+                                <label htmlFor="inputZip">Postcode / ZIP</label>
+                                <input type="text" className="form-control" id="inputZip" name="zip" placeholder="Postcode / ZIP" value={formData.zip} onChange={handleChange} required />
+                            </div>
+                            <div className="form-group">
+                                <label htmlFor="inputPhone">Phone</label>
+                                <input type="tel" className="form-control" id="inputPhone" name="phone" placeholder="Phone" value={formData.phone} onChange={handleChange} required />
+                            </div>
+                            <div className="form-group">
+                                <label htmlFor="inputEmail">Email Address</label>
+                                <input type="email" className="form-control" id="inputEmail" name="email" placeholder="Email Address" value={formData.email} onChange={handleChange} required />
+                            </div>
+
+                            <button type="submit" className="btn btn-secondary text-bg-dark">Cash on Delivery</button>
+                        </form>
+                    </div>
+                    <h1 className='text-black'>
+                        Total Amount: ${selectedTotal.toFixed(2)}
+                    </h1>
+                </div>
+            </div>
+        </>
+    );
+}
+
+export default Paymentpage;
+
+router.post('/orders', createOrder);
+
