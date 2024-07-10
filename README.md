@@ -566,3 +566,90 @@ export default Paymentpage;
 
 router.post('/orders', createOrder);
 
+
+
+export const getCartItemCount = async (req, res) => {
+    try {
+        const { userId } = req.params;
+        const cartItems = await CartModel.find({ user_id: userId });
+        const itemCount = cartItems.length;
+
+        res.status(200).send({ itemCount });
+    } catch (e) {
+        console.error(e);
+        res.status(500).send({ error: e?.message });
+    }
+};
+
+router.get('/cartItemCount/:userId', getCartItemCount);
+
+
+import React, { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
+import axios from 'axios';
+import './Navbar.css';
+
+function Navbar({ userId, renderButtons }) {
+    const [itemCount, setItemCount] = useState(0);
+
+    useEffect(() => {
+        const fetchCartItemCount = async () => {
+            try {
+                const response = await axios.get(`/api/cartItemCount/${userId}`);
+                setItemCount(response.data.itemCount);
+            } catch (error) {
+                console.error('Error fetching cart item count:', error);
+            }
+        };
+
+        if (userId) {
+            fetchCartItemCount();
+        }
+    }, [userId]);
+
+    return (
+        <nav
+            className="navbar navbar-expand-lg"
+            style={{
+                backgroundColor: "#99ced3",
+            }}
+        >
+            <Link className="navbar-brand p-2" to="/">
+                ᕼᗝᗰᗴ
+            </Link>
+
+            <div className="nav-search">
+                <input type="text" placeholder="Search..." className="search-input" />
+                <div className="search-icon">
+                    <span className="material-symbols-outlined">search</span>
+                </div>
+            </div>
+            <Link className="navbar-brand" to={`/cartinfo/${userId}`}>
+                <svg xmlns="http://www.w3.org/2000/svg" width="100" height="30" fill="currentColor" className="bi bi-cart" viewBox="0 0 16 16">
+                    <path d="M0 1.5A.5.5 0 0 1 .5 1H2a.5.5 0 0 1 .485.379L2.89 3H14.5a.5.5 0 0 1 .491.592l-1.5 8A.5.5 0 0 1 13 12H4a.5.5 0 0 1-.491-.408L2.01 3.607 1.61 2H.5a.5.5 0 0 1-.5-.5M3.102 4l1.313 7h8.17l1.313-7zM5 12a2 2 0 1 0 0 4 2 2 0 0 0 0-4m7 0a2 2 0 1 0 0 4 2 2 0 0 0 0-4m-7 1a1 1 0 1 1 0 2 1 1 0 0 1 0-2m7 0a1 1 0 1 1 0 2 1 1 0 0 1 0-2" />
+                </svg>
+                <span className="cart-count">{itemCount}</span>
+            </Link>
+            <div className="collapse navbar-collapse" id="navbarNav">
+                <ul className="navbar-nav ml-auto">
+                    <li className="nav-item">{renderButtons()}</li>
+                </ul>
+            </div>
+        </nav>
+    );
+}
+
+export default Navbar;
+
+
+/* Navbar.css */
+.cart-count {
+    position: absolute;
+    top: 5px;
+    right: 10px;
+    background-color: red;
+    color: white;
+    border-radius: 50%;
+    padding: 2px 8px;
+    font-size: 14px;
+}
